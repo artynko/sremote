@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>sremote-extensions</artifactId>
+	<groupId>artynko</groupId>
+	<name>Spring Boot Simple Sample</name>
+	<description>Spring Boot Simple Sample</description>
+	<version>1.0-SNAPSHOT</version>
+	<url>http://projects.spring.io/spring-boot/</url>
+	<organization>
+		<name>Pivotal Software, Inc.</name>
+		<url>http://www.spring.io</url>
+	</organization>
+	<properties>
+		<main.basedir>${basedir}/../..</main.basedir>
+	</properties>
+<repositories>
+    <repository>
+        <id>teleal-repo</id>
+        <url>http://teleal.org/m2</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+
+	<dependencies>
+<dependency>
+        <groupId>org.teleal.cling</groupId>
+        <artifactId>cling-core</artifactId>
+        <version>1.0.5</version>
+    </dependency>
+    <dependency>
+        <groupId>org.teleal.cling</groupId>
+        <artifactId>cling-support</artifactId>
+        <version>1.0.5</version>
+    </dependency>
+</dependencies>
+
+	<build>
+		<plugins>
+		</plugins>
+	</build>
+</project>

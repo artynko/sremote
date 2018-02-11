@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>sRemote</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular.min.js">
+        </script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.16/angular-resource.min.js">
+        </script>
+	<script>
+
+		var services = angular.module("services", ["ngResource"]);
+		var app = angular.module("app", ["services"]);
+		
+		services.factory("mediabrowser", ["$resource", function ($resource) {
+			return $resource("", {}, {
+				listNew: {method: "GET", params: {}, url: "/mediabrowser/new", isArray: true},
+				listMovies: {method: "GET", params: {}, url: "/mediabrowser/movies", isArray: true},
+				listAudio: {method: "GET", params: {}, url: "/mediabrowser/audio",  isArray: true},
+				listAudioFavorites: {method: "GET", params: {}, url: "/mediabrowser/audio/favorites",  isArray: true}
+			});
+		}]);
+		services.factory("playback", ["$resource", function ($resource) {
+			return $resource("", {}, {
+				play: {method: "POST", params: {}, url: "/playback/play"},
+				stop: {method: "POST", params: {}, url: "/playback/stop"},
+				pause: {method: "POST", params: {}, url: "/playback/pause"},
+				next: {method: "POST", params: {}, url: "/playback/next"},
+				playRandomMusic: {method: "POST", params: {}, url: "/playback/play/allaudio"},
+				currentTitle: {method: "GET", params: {}, url: "/playback/current/title"},
+				activateFirefox: {method: "POST", params: {}, url: "/firefox/activate"},
+				playYoutube: {method: "POST", params: {}, url: "/firefox/play/:id"}
+			});
+		}]);
+		services.factory("xbmc", ["$resource", function ($resource) {
+			return $resource("", {}, {
+				submit: {method: "POST", params: {}, url: "/xbmc"},
+			});
+		}]);
+
+
+		app.controller('UnWatch', ["$scope", "mediabrowser", "$http", "$interval", "playback", "xbmc", function ($scope, mediabrowser, $http, $interval, playback, xbmc) {
+			$interval(function() { // refresh the title every 3 seconds (kinda overkill but who cares) to lazy to do websockets
+				playback.currentTitle(function (result) {
+					if (result.title == "") {
+						$scope.playbackState = "Stop"
+						$scope.currentTitle = result
+					} else if (result.title != $scope.currentTitle.title) {
+						$scope.queue.splice(0, 1)
+						$scope.currentTitle = result
+						$scope.playbackState = "Play"
+					} 
+				});
+			}, 3000);
+
+			$interval(function() { // time update
+				today = new Date();
+				var minutes = today.getMinutes()
+				if (("" + minutes).length == 1)
+					minutes = "0" + minutes
+				$scope.time = today.getHours() + ":" + minutes
+			}, 60000);
+
+			$interval(function() { // streams update
+				$scope.openTwitch()
+			}, 600000);
+
+			$interval(function() { // new update
+				$scope.listNew()
+			}, 300000);
+
+			today = new Date();
+			var minutes = today.getMinutes()
+			if (("" + minutes).length == 1)
+				minutes = "0" + minutes
+			$scope.time = today.getHours() + ":" + minutes
+			$scope.queue = [];
+			$scope.currentTitle = { title: ""};
+			$scope.currentTab = "New"
+			$scope.playbackState = "Stop"
+			$scope.ordering = "title";
+
+
+			$scope.styleTab = function(tabname) {
+				return tabname == $scope.currentTab;
+			}
+			$scope.getPlaybackStateClass = function(state) {
+				return state == $scope.playbackState;
+			}
+			$scope.listNew = function() {
+				$scope.newVideos = mediabrowser.listNew();
+				$scope.currentTab = "New"
+			}
+			$scope.openTwitch = function() {
+				$scope.twitchChannels = [];
+				$http.post("/twitch", { url: "https://api.twitch.tv/kraken/streams?game=dota%202&limit=10" }).success(function (data) {
+					$scope.twitchChannels = data;
+				});
+				$scope.currentTab = "Twitch"
+			}
+			// load initial data
+			$scope.listNew()
+			$scope.openTwitch()
+
+		}]);
+	</script>
+  </head>
+<style>
+.no-cursor {
+	cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAZdEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41LjbQg61aAAAADUlEQVQYV2P4//8/IwAI/QL/+TZZdwAAAABJRU5ErkJggg=='),
+	    url(images/blank.cur),
+	    none !important;
+}
+</style>
+  <body ng-app="app" ng-controller="UnWatch" style="background-color: #000;">
+	<div class="container-fluid" >
+		<div class="row" style="border-bottom: 1px solid #111; margin-bottom: 22px;">
+			<div class="col-md-6" >
+				<div style="color: #aaa; font-size: 25pt; font-weight: bold; margin-top: 6px; margin-bottom: 12px" >
+				<span ng-show="currentTitle.title != ''" style="margin-left: 45px" class="glyphicon glyphicon-play"></span><span style="margin-left: 6px">{{ currentTitle.title }}</span>
+				</div>
+			</div>
+			<div class="col-md-6" >
+				<div style="text-align: right; color: #aaa; font-size: 25pt; font-weight: bold; margin-top: 6px; margin-bottom: 12px" >
+					<span style="margin-right: 45px">{{ time }}</span>
+				</div>
+			</div>
+		</div>
+		<div class="row" ng-show="queue.length > 0">
+			<div class="col-md-12" >
+				<div style="margin-right: 25px; margin-left: 25px;">
+					<div class="panel panel-warning" >
+						<div class="panel-heading">Queue</div>
+						<ul class="list-group">
+							<li ng-repeat="q in queue track by $index" class="list-group-item" style="border: 1px solid #FAEBCC; color: #555">{{ ($index + 1) + ". " + q }}</li>
+						 </ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+		  <div class="col-md-5" >
+			<div style="margin-left: 25px;">
+				<div class="panel panel-default" style="border: 1px solid #151515">
+					<div class="panel-body" style="background-color: #111; color: #aaa; border: none;">
+						<div class="media" style="border-bottom: 1px solid #222; padding-bottom: 16px"  ng-repeat="v in newVideos">
+							<div class="media-body">
+									  <img ng-show="currentTab != 'Movies'" class="media-object pull-left" width="100px" src="{{ v.thumbnailUrl }}" alt="img" />
+								 <span style="margin-left: 20px; font-weight: bold; font-size: 16pt; display: inline-block; width: 580px">{{ v.title }}<span>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		  </div>
+		  <div class="col-md-5" >
+			<div style="margin-left: 25px;">
+				<div class="panel panel-default" style="border: 1px solid #151515">
+					<div class="panel-body" style="background-color: #111; color: #aaa; border: none;">
+						<div class="media" style="border-bottom: 1px solid #222; padding-bottom: 16px"  ng-repeat="v in twitchChannels.streams ">
+							<div class="media-body">
+									  <img class="media-object pull-left" style="display: inline-block" width="46px" src="{{ v.channel.logo }}" alt="img" />
+								 <span style="margin-left: 20px; font-weight: bold; font-size: 16pt; display: inline-block; width: 600px">{{ v.channel.display_name + " " + v.channel.status }}<span>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	<div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>

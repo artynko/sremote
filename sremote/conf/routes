@@ -1,0 +1,32 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           @controllers.Application.index
+GET     /mediabrowser/new                           @controllers.MediaBrowserController.listNew
+GET     /mediabrowser/unwatched                           @controllers.MediaBrowserController.listUnwatched
+GET     /mediabrowser/movies                           @controllers.MediaBrowserController.listMovies
+GET     /mediabrowser/audio                           @controllers.MediaBrowserController.listAllAudio
+GET     /mediabrowser/audio/favorites                          @controllers.MediaBrowserController.listFavorites
+POST     /mediabrowser/audio/favorites/:containerId/:videoId                          @controllers.MediaBrowserController.addToFavorites(containerId, videoId)
+DELETE     /mediabrowser/audio/favorites/:containerId/:videoId                          @controllers.MediaBrowserController.removeFromFavorites(containerId, videoId)
+OPTIONS     /mediabrowser/audio/favorites/:containerId/:videoId                          @controllers.MediaBrowserController.options(containerId, videoId)
+POST     /playback/play                          @controllers.PlaybackController.invokePlay
+POST     /playback/play/allaudio                          @controllers.PlaybackController.playAllAudio
+POST     /playback/play/audio/:containerId/:videoId                          @controllers.PlaybackController.invokeAudioLoadAndPlay(containerId, videoId)
+POST     /playback/play/video/:containerId/:videoId                          @controllers.PlaybackController.invokeLoadAndPlay(containerId, videoId)
+POST     /playback/queue/audio/:containerId/:audioId                          @controllers.PlaybackController.queueAudio(containerId, audioId)
+POST     /playback/pause                          @controllers.PlaybackController.invokePause
+POST     /playback/stop                          @controllers.PlaybackController.invokeStop
+POST     /playback/next                          @controllers.PlaybackController.invokeNext
+POST     /firefox/activate                          @controllers.PlaybackController.activateFirefox
+POST     /firefox/play/:videoId                          @controllers.PlaybackController.playYoutube(videoId)
+POST     /firefox/youtube/skipAdvert                          @controllers.PlaybackController.skipAdvert()
+POST     /xbmc                          @controllers.XbmcController.submit
+POST     /twitch                          @controllers.TwitchController.submit
+GET     /playback/current/title                          @controllers.PlaybackController.getCurrentPlaying
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET     /ui/*file               controllers.Assets.at(path="/public", file)
